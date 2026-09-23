@@ -5,6 +5,10 @@ const dotenv = require("dotenv");
 const connectDB = require("./config/db");
 const authRoutes = require("./routes/authRoutes");
 const employeeRoutes = require("./routes/employeeRoutes");
+const documentRoutes = require("./routes/documentRoutes");
+const leaveRoutes = require("./routes/leaveRoutes");
+const attendanceRoutes = require("./routes/attendanceRoutes");
+const dashboardRoutes = require("./routes/dashboardRoutes");
 
 dotenv.config();
 
@@ -21,6 +25,14 @@ app.use(express.urlencoded({ extended: true }));
 app.use("/api/auth", authRoutes);
 
 app.use("/api/employees", employeeRoutes);
+
+app.use("/api/documents", documentRoutes);
+
+app.use("/api/leaves", leaveRoutes);
+
+app.use("/api/attendance", attendanceRoutes);
+
+app.use("/api/dashboard", dashboardRoutes);
 
 // Test route
 app.get("/", (req, res) => {

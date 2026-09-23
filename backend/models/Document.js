@@ -10,16 +10,8 @@ const documentSchema = new mongoose.Schema(
 
     documentType: {
       type: String,
-      enum: [
-        "Aadhar Card",
-        "PAN Card",
-        "Resume",
-        "Education Certificate",
-        "Experience Certificate",
-        "Joining Letter",
-        "Other",
-      ],
       required: true,
+      trim: true,
     },
 
     documentName: {
@@ -33,24 +25,42 @@ const documentSchema = new mongoose.Schema(
       required: true,
     },
 
-    verificationStatus: {
+    fileType: {
+      type: String,
+      required: true,
+    },
+
+    fileSize: {
+      type: Number,
+      required: true,
+    },
+
+    status: {
       type: String,
       enum: ["Pending", "Verified", "Rejected"],
       default: "Pending",
     },
 
-    remarks: {
-      type: String,
-      trim: true,
+    uploadedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
     },
 
-    uploadedAt: {
-      type: Date,
-      default: Date.now,
+    verifiedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      default: null,
     },
 
     verifiedAt: {
       type: Date,
+      default: null,
+    },
+
+    remarks: {
+      type: String,
+      trim: true,
     },
   },
   {

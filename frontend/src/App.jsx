@@ -1,48 +1,58 @@
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { Navigate, Route, Routes } from "react-router-dom";
+import Login from "./pages/Login.jsx";
+import Signup from "./pages/SignUp.jsx";
+import Dashboard from "./pages/Dashboard.jsx";
+import DashboardLayout from "./layouts/DashboardLayout.jsx";
 
-import Login from "./pages/Login";
-// import Dashboard from "./pages/Dashboard";
-// import Employees from "./pages/Employees";
-// import Documents from "./pages/Documents";
-// import Leaves from "./pages/Leaves";
-
-function App() {
+function ProtectedRoute({ children }) {
   const token = localStorage.getItem("token");
 
+  return token ? children : <Navigate to="/login" replace />;
+}
+
+function PlaceholderPage({ title }) {
   return (
-    <BrowserRouter>
-      <Routes>
-        <Route
-          path="/"
-          element={
-            token ? <Navigate to="/dashboard" /> : <Navigate to="/login" />
-          }
-        />
-
-        <Route path="/login" element={<Login />} />
-
-        {/* <Route
-          path="/dashboard"
-          element={token ? <Dashboard /> : <Navigate to="/login" />}
-        />
-
-        <Route
-          path="/employees"
-          element={token ? <Employees /> : <Navigate to="/login" />}
-        />
-
-        <Route
-          path="/documents"
-          element={token ? <Documents /> : <Navigate to="/login" />}
-        />
-
-        <Route
-          path="/leaves"
-          element={token ? <Leaves /> : <Navigate to="/login" />}
-        /> */}
-      </Routes>
-    </BrowserRouter>
+    <div className="page-heading">
+      <div>
+        <span className="eyebrow">WORKSPACE</span>
+        <h1>{title}</h1>
+        <p>This module will be implemented next.</p>
+      </div>
+    </div>
   );
 }
 
-export default App;
+export default function App() {
+  return (
+    <Routes>
+      <Route path="/" element={<Navigate to="/dashboard" replace />} />
+      <Route path="/login" element={<Login />} />
+
+      <Route path="/signup" element={<Signup/>} />
+
+      <Route
+        element={
+          <ProtectedRoute>
+            <DashboardLayout />
+          </ProtectedRoute>
+        }
+      >
+        <Route path="/dashboard" element={<Dashboard />} />
+        <Route
+          path="/employees"
+          element={<PlaceholderPage title="Employees" />}
+        />
+        <Route
+          path="/documents"
+          element={<PlaceholderPage title="Documents" />}
+        />
+        <Route
+          path="/leaves"
+          element={<PlaceholderPage title="Leave Management" />}
+        />
+      </Route>
+
+      <Route path="*" element={<Navigate to="/" replace />} />
+    </Routes>
+  );
+}

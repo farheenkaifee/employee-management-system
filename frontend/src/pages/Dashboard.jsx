@@ -1,115 +1,106 @@
+
 import { useEffect, useState } from "react";
-import {
-  Users,
-  FileText,
-  Clock,
-  CheckCircle,
-  ArrowUpRight,
-} from "lucide-react";
+import { Users, Files, Clock, CheckCircle } from "lucide-react";
 import api from "../services/api";
 
-const initialStats = [
-  { label: "Total Employees", value: "—", icon: Users },
-  { label: "Total Documents", value: "—", icon: FileText },
-  { label: "Pending Leaves", value: "—", icon: Clock },
-  { label: "Approved Leaves", value: "—", icon: CheckCircle },
+const initialStats = {
+  totalEmployees: 0,
+  totalDocuments: 0,
+  pendingLeaves: 0,
+  approvedLeaves: 0,
+};
+
+const statCards = [
+  {
+    key: "totalEmployees",
+    title: "Total Employees",
+    icon: Users,
+  },
+  {
+    key: "totalDocuments",
+    title: "Total Documents",
+    icon: Files,
+  },
+  {
+    key: "pendingLeaves",
+    title: "Pending Leaves",
+    icon: Clock,
+  },
+  {
+    key: "approvedLeaves",
+    title: "Approved Leaves",
+    icon: CheckCircle,
+  },
 ];
 
 export default function Dashboard() {
   const [stats, setStats] = useState(initialStats);
-  const [message, setMessage] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
   useEffect(() => {
-    const fetchSummary = async () => {
+    const loadStats = async () => {
       try {
+        setLoading(true);
+        setError("");
+
         const response = await api.get("/dashboard/summary");
+        const data = response.data.stats || response.data.data || response.data;
 
-        const data = response.data;
-
-        setStats([
-          {
-            label: "Total Employees",
-            value: data.totalEmployees ?? 0,
-            icon: Users,
-          },
-          {
-            label: "Total Documents",
-            value: data.totalDocuments ?? 0,
-            icon: FileText,
-          },
-          {
-            label: "Pending Leaves",
-            value: data.pendingLeaves ?? 0,
-            icon: Clock,
-          },
-          {
-            label: "Approved Leaves",
-            value: data.approvedLeaves ?? 0,
-            icon: CheckCircle,
-          },
-        ]);
-      } catch {
-        setMessage(
-          "Dashboard data will appear when the summary API is connected."
+        setStats({
+          totalEmployees: Number(data.totalEmployees ?? 0),
+          totalDocuments: Number(data.totalDocuments ?? 0),
+          pendingLeaves: Number(data.pendingLeaves ?? 0),
+          approvedLeaves: Number(data.approvedLeaves ?? 0),
+        });
+      } catch (err) {
+        setError(
+          err.response?.data?.message ||
+            "Unable to load dashboard statistics."
         );
+      } finally {
+        setLoading(false);
       }
     };
 
-    fetchSummary();
+    loadStats();
   }, []);
 
-  const user = JSON.parse(localStorage.getItem("user") || "{}");
-
   return (
-    <div>
-      <div className="page-heading">
+    <div className="dashboard-page">
+      <div className="dashboard-heading">
         <div>
-          <span className="eyebrow">OVERVIEW</span>
-          <h1>Good day, {user.name || "there"}!</h1>
-          <p>Here's what's happening in your workspace.</p>
+          <h1>Dashboard</h1>
+          <p>Overview of your employee management system.</p>
         </div>
-
-        <span className="role-badge">
-          {user.role || "User"}
-        </span>
       </div>
 
-      <div className="stats-grid">
-        {stats.map(({ label, value, icon: Icon }) => (
-          <div className="stat-card" key={label}>
-            <div className="stat-top">
-              <span>{label}</span>
-              <div className="stat-icon">
-                <Icon size={20} />
-              </div>
+      {error && <div className="dashboard-error">{error}</div>}
+
+      <div className="dashboard-stats-grid">
+        {statCards.map(({ key, title, icon: Icon }) => (
+          <div className="dashboard-stat-card" key={key}>
+            <div className="dashboard-stat-icon">
+              <Icon size={23} />
             </div>
 
-            <h2>{value}</h2>
-
-            <span className="stat-caption">
-              <ArrowUpRight size={14} />
-              Current system overview
-            </span>
+            <div>
+              <p>{title}</p>
+              <h2>
+                {loading ? "..." : stats[key].toLocaleString()}
+              </h2>
+            </div>
           </div>
         ))}
       </div>
 
-      {message && <p className="muted">{message}</p>}
-
-      <div className="welcome-panel">
-        <div>
-          <span className="eyebrow">YOUR WORKSPACE</span>
-          <h2>Everything in one place.</h2>
-          <p>
-            Manage employee records, organize documents and
-            keep track of leave requests from one workspace.
-          </p>
-        </div>
-
-        <div className="welcome-icon">
-          <Users size={46} />
-        </div>
-      </div>
+      <section className="dashboard-welcome-card">
+        <h2>Welcome to PeopleDesk</h2>
+        <p>
+          Manage employee records, documents, and leave requests
+          from one centralized workspace.
+        </p>
+      </section>
     </div>
   );
 }

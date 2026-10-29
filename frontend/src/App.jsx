@@ -3,6 +3,9 @@ import Login from "./pages/Login.jsx";
 import Signup from "./pages/SignUp.jsx";
 import Dashboard from "./pages/Dashboard.jsx";
 import DashboardLayout from "./layouts/DashboardLayout.jsx";
+import Employees from "./pages/Employees.jsx";
+import Documents from "./pages/Documents.jsx";
+import Leaves from "./pages/Leaves.jsx";
 
 function ProtectedRoute({ children }) {
   const token = localStorage.getItem("token");
@@ -38,17 +41,14 @@ export default function App() {
         }
       >
         <Route path="/dashboard" element={<Dashboard />} />
-        <Route
-          path="/employees"
-          element={<PlaceholderPage title="Employees" />}
-        />
-        <Route
-          path="/documents"
-          element={<PlaceholderPage title="Documents" />}
-        />
+        
+        <Route path="employees" element={<Employees />} />
+
+        <Route path="documents" element={<Documents />} />
+
         <Route
           path="/leaves"
-          element={<PlaceholderPage title="Leave Management" />}
+          element={<Leaves />}
         />
       </Route>
 

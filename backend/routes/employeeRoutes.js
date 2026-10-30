@@ -21,6 +21,6 @@ router.get("/:id", protect, authorizeRoles("admin", "hr"), getEmployeeById);
 
 router.put("/:id", protect, authorizeRoles("admin", "hr"), updateEmployee);
 
-router.delete("./:id", protect, authorizeRoles("admin", "hr"), deleteEmployee);
+router.delete("/:id", protect, authorizeRoles("admin", "hr"), deleteEmployee);
 
 module.exports = router;

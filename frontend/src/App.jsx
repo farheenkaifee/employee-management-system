@@ -1,6 +1,6 @@
 import { Navigate, Route, Routes } from "react-router-dom";
 import Login from "./pages/Login.jsx";
-import Signup from "./pages/SignUp.jsx";
+import Signup from "./pages/Signup.jsx";
 import Dashboard from "./pages/Dashboard.jsx";
 import DashboardLayout from "./layouts/DashboardLayout.jsx";
 import Employees from "./pages/Employees.jsx";

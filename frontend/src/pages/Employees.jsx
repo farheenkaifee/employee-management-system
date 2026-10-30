@@ -3,18 +3,20 @@ import { useCallback, useEffect, useState } from "react";
 import api from "../services/api";
 
 const emptyForm = {
-  name: "",
-  email: "",
   employeeId: "",
+  firstName: "",
+  lastName: "",
+  email: "",
+  password: "",
+  phone: "",
   department: "",
   designation: "",
-  phone: "",
 };
 
 export default function Employees() {
   const [employees, setEmployees] = useState([]);
-  const [search, setSearch] = useState("");
   const [form, setForm] = useState(emptyForm);
+  const [search, setSearch] = useState("");
   const [editingId, setEditingId] = useState(null);
   const [showForm, setShowForm] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -27,19 +29,12 @@ export default function Employees() {
     setError("");
 
     try {
-      // Adjust this URL if your backend uses a different route.
       const response = await api.get("/employees");
-      const data = response.data;
-
-      setEmployees(
-        Array.isArray(data)
-          ? data
-          : data.employees || data.data || []
-      );
+      setEmployees(response.data.employees || []);
     } catch (err) {
       setError(
         err.response?.data?.message ||
-          "Could not load employees. Check your backend API route."
+        "Unable to load employees. Please check your login and permissions."
       );
     } finally {
       setLoading(false);
@@ -49,6 +44,13 @@ export default function Employees() {
   useEffect(() => {
     loadEmployees();
   }, [loadEmployees]);
+
+  const handleChange = (e) => {
+    setForm((previous) => ({
+      ...previous,
+      [e.target.name]: e.target.value,
+    }));
+  };
 
   const openAddForm = () => {
     setForm(emptyForm);
@@ -60,25 +62,20 @@ export default function Employees() {
 
   const openEditForm = (employee) => {
     setForm({
-      name: employee.name || "",
-      email: employee.email || "",
       employeeId: employee.employeeId || "",
+      firstName: employee.firstName || "",
+      lastName: employee.lastName || "",
+      email: employee.email || "",
+      password: "",
+      phone: employee.phone || "",
       department: employee.department || "",
       designation: employee.designation || "",
-      phone: employee.phone || "",
     });
 
     setEditingId(employee._id);
     setShowForm(true);
     setError("");
     setNotice("");
-  };
-
-  const handleChange = (e) => {
-    setForm((previous) => ({
-      ...previous,
-      [e.target.name]: e.target.value,
-    }));
   };
 
   const handleSubmit = async (e) => {
@@ -88,12 +85,25 @@ export default function Employees() {
     setNotice("");
 
     try {
+      const payload = {
+        employeeId: form.employeeId.trim(),
+        firstName: form.firstName.trim(),
+        lastName: form.lastName.trim(),
+        email: form.email.trim(),
+        phone: form.phone.trim(),
+        department: form.department.trim(),
+        designation: form.designation.trim(),
+      };
+
       if (editingId) {
-        await api.put(`/employees/${editingId}`, form);
+        await api.put(`/employees/${editingId}`, payload);
         setNotice("Employee updated successfully.");
       } else {
-        await api.post("/employees", form);
-        setNotice("Employee added successfully.");
+        await api.post("/employees", {
+          ...payload,
+          password: form.password,
+        });
+        setNotice("Employee and login account created successfully.");
       }
 
       setShowForm(false);
@@ -103,7 +113,7 @@ export default function Employees() {
     } catch (err) {
       setError(
         err.response?.data?.message ||
-          "Could not save employee. Check your API route and required fields."
+        "Unable to save employee. Please try again."
       );
     } finally {
       setSaving(false);
@@ -112,7 +122,7 @@ export default function Employees() {
 
   const handleDelete = async (employee) => {
     const confirmed = window.confirm(
-      `Are you sure you want to delete ${employee.name}?`
+      `Are you sure you want to deactivate ${employee.firstName} ${employee.lastName}?`
     );
 
     if (!confirmed) return;
@@ -122,26 +132,31 @@ export default function Employees() {
 
     try {
       await api.delete(`/employees/${employee._id}`);
-      setNotice("Employee deleted successfully.");
+      setNotice("Employee deactivated successfully.");
       await loadEmployees();
     } catch (err) {
       setError(
         err.response?.data?.message ||
-          "Could not delete employee. Check your permissions and API route."
+        "Unable to deactivate employee."
       );
     }
   };
 
   const filteredEmployees = employees.filter((employee) => {
-    const query = search.trim().toLowerCase();
+    const query = search.toLowerCase().trim();
 
-    return [
-      employee.name,
+    const values = [
+      employee.firstName,
+      employee.lastName,
       employee.email,
       employee.employeeId,
       employee.department,
       employee.designation,
-    ].some((value) => String(value || "").toLowerCase().includes(query));
+    ];
+
+    return values.some((value) =>
+      String(value || "").toLowerCase().includes(query)
+    );
   });
 
   return (
@@ -149,26 +164,36 @@ export default function Employees() {
       <div className="employees-heading">
         <div>
           <h1>Employees</h1>
-          <p>Manage your organization's employee records.</p>
+          <p>Manage employee records and accounts.</p>
         </div>
 
-        <button className="employee-primary-btn" onClick={openAddForm}>
+        <button
+          className="employee-primary-btn"
+          onClick={openAddForm}
+        >
           + Add Employee
         </button>
       </div>
 
-      {error && <div className="employee-alert employee-alert-error">{error}</div>}
-      {notice && <div className="employee-alert employee-alert-success">{notice}</div>}
+      {error && (
+        <div className="employee-alert employee-alert-error">
+          {error}
+        </div>
+      )}
+
+      {notice && (
+        <div className="employee-alert employee-alert-success">
+          {notice}
+        </div>
+      )}
 
       <div className="employees-toolbar">
         <input
           type="search"
+          placeholder="Search employees..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          placeholder="Search by name, email, ID or department..."
-          aria-label="Search employees"
         />
-
         <span>{filteredEmployees.length} employee(s)</span>
       </div>
 
@@ -178,10 +203,31 @@ export default function Employees() {
 
           <form onSubmit={handleSubmit} className="employee-form">
             <label>
-              Full Name *
+              Employee ID *
               <input
-                name="name"
-                value={form.name}
+                name="employeeId"
+                value={form.employeeId}
+                onChange={handleChange}
+                required
+                disabled={Boolean(editingId)}
+              />
+            </label>
+
+            <label>
+              First Name *
+              <input
+                name="firstName"
+                value={form.firstName}
+                onChange={handleChange}
+                required
+              />
+            </label>
+
+            <label>
+              Last Name *
+              <input
+                name="lastName"
+                value={form.lastName}
                 onChange={handleChange}
                 required
               />
@@ -198,11 +244,26 @@ export default function Employees() {
               />
             </label>
 
+            {!editingId && (
+              <label>
+                Initial Password *
+                <input
+                  name="password"
+                  type="password"
+                  value={form.password}
+                  onChange={handleChange}
+                  minLength={6}
+                  required
+                />
+              </label>
+            )}
+
             <label>
-              Employee ID
+              Phone
               <input
-                name="employeeId"
-                value={form.employeeId}
+                name="phone"
+                type="tel"
+                value={form.phone}
                 onChange={handleChange}
               />
             </label>
@@ -225,19 +286,13 @@ export default function Employees() {
               />
             </label>
 
-            <label>
-              Phone
-              <input
-                name="phone"
-                type="tel"
-                value={form.phone}
-                onChange={handleChange}
-              />
-            </label>
-
             <div className="employee-form-actions">
               <button type="submit" disabled={saving}>
-                {saving ? "Saving..." : editingId ? "Update Employee" : "Save Employee"}
+                {saving
+                  ? "Saving..."
+                  : editingId
+                  ? "Update Employee"
+                  : "Save Employee"}
               </button>
 
               <button
@@ -245,8 +300,8 @@ export default function Employees() {
                 className="employee-secondary-btn"
                 onClick={() => {
                   setShowForm(false);
-                  setEditingId(null);
                   setForm(emptyForm);
+                  setEditingId(null);
                 }}
               >
                 Cancel
@@ -261,7 +316,7 @@ export default function Employees() {
           <p className="employee-empty">Loading employees...</p>
         ) : filteredEmployees.length === 0 ? (
           <p className="employee-empty">
-            {error ? "Employee records could not be loaded." : "No employees found."}
+            No employee records found.
           </p>
         ) : (
           <div className="employee-table-scroll">
@@ -273,6 +328,7 @@ export default function Employees() {
                   <th>Department</th>
                   <th>Designation</th>
                   <th>Phone</th>
+                  <th>Status</th>
                   <th>Actions</th>
                 </tr>
               </thead>
@@ -281,23 +337,32 @@ export default function Employees() {
                 {filteredEmployees.map((employee) => (
                   <tr key={employee._id}>
                     <td>
-                      <strong>{employee.name}</strong>
+                      <strong>
+                        {employee.firstName} {employee.lastName}
+                      </strong>
                       <small>{employee.email}</small>
                     </td>
-                    <td>{employee.employeeId || "—"}</td>
+
+                    <td>{employee.employeeId}</td>
                     <td>{employee.department || "—"}</td>
                     <td>{employee.designation || "—"}</td>
                     <td>{employee.phone || "—"}</td>
+                    <td>{employee.employmentStatus || "Active"}</td>
+
                     <td>
                       <div className="employee-row-actions">
-                        <button onClick={() => openEditForm(employee)}>
+                        <button
+                          onClick={() => openEditForm(employee)}
+                        >
                           Edit
                         </button>
+
                         <button
                           className="employee-delete-btn"
                           onClick={() => handleDelete(employee)}
+                          disabled={employee.employmentStatus === "Inactive"}
                         >
-                          Delete
+                          Deactivate
                         </button>
                       </div>
                     </td>
